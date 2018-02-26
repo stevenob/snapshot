@@ -136,9 +136,11 @@ def list_instances(project):
     return
 
 @instances.command('stop')
+@click.option('--force', default=False,
+    help="Run without project name")
 @click.option('--project', default=None,
   help='Only instances for project')
-def stop_instances(project):
+def stop_instances(project, Force=True|False):
     "Stop EC2 instances"
 
     instances = filter_instances(project)
@@ -168,6 +170,32 @@ def start_instances(project):
       except botocore.exceptions.ClientError as e:
           print(" Could not start {0}. ".format(i.id) + str(e))
           continue
+
+    return
+
+@instances.command('reboot')
+@click.option('--force', default=False,
+    help="Run without project name")
+@click.option('--project', default=None,
+  help="Only instances for project")
+def reboot_instances(project, force):
+    "Reboot EC2 instances"
+
+    instances = filter_instances(project)
+
+    for i in instances:
+        print("Stopping {0}...".format(i.id))
+        try:
+            i.stop()
+            i.wait_until_stopped()
+            print("Starting {0}...".format(i.id))
+            i.start()
+            i.wait_until_running()
+        except botocore.exceptions.ClientError as e:
+            print(" Could not reboot {0}. ".format(i.id) + str(e))
+            continue
+
+    print("Job's done!")
 
     return
 
